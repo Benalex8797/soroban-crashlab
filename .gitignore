@@ -1,0 +1,14 @@
+# Rust
+target/
+**/*.rs.bk
+
+# Node / Next
+node_modules/
+apps/web/node_modules/
+apps/web/.next/
+
+# Env and logs
+.env
+.env.*
+*.log
+

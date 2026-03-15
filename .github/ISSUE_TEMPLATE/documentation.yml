@@ -1,0 +1,24 @@
+name: Documentation request
+description: Suggest docs improvements for users and contributors.
+labels: [documentation]
+body:
+  - type: textarea
+    id: gap
+    attributes:
+      label: Documentation gap
+    validations:
+      required: true
+  - type: textarea
+    id: audience
+    attributes:
+      label: Audience impacted
+      description: New contributor, maintainer, or integrator?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: What should readers be able to do after this update?
+    validations:
+      required: true
