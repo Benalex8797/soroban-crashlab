@@ -66,6 +66,78 @@ pub fn export_scenario_json(
     serde_json::to_string_pretty(&scenario)
 }
 
+fn is_valid_rust_ident(name: &str) -> bool {
+    let mut chars = name.chars();
+    let Some(first) = chars.next() else {
+        return false;
+    };
+    if !(first == '_' || first.is_ascii_alphabetic()) {
+        return false;
+    }
+    chars.all(|c| c == '_' || c.is_ascii_alphanumeric())
+}
+
+/// Exports a failing bundle as a Rust regression test fixture snippet.
+///
+/// The emitted snippet is deterministic and intended for inclusion in an
+/// integration test harness that depends on `crashlab-core`.
+pub fn export_rust_regression_fixture(
+    bundle: &CaseBundle,
+    test_name: &str,
+) -> Result<String, String> {
+    if !is_valid_rust_ident(test_name) {
+        return Err(
+            "invalid test name: must be a non-empty Rust identifier (a-z, A-Z, 0-9, _)".into(),
+        );
+    }
+
+    let payload_literal = if bundle.seed.payload.is_empty() {
+        String::new()
+    } else {
+        bundle
+            .seed
+            .payload
+            .iter()
+            .map(|b| format!("0x{b:02x}"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+
+    Ok(format!(
+        r#"#[test]
+fn {test_name}() {{
+    use crashlab_core::{{replay_seed_bundle, CaseBundle, CaseSeed, CrashSignature}};
+
+    let bundle = CaseBundle {{
+        seed: CaseSeed {{
+            id: {seed_id},
+            payload: vec![{payload_literal}],
+        }},
+        signature: CrashSignature {{
+            category: {category:?}.to_string(),
+            digest: {digest},
+            signature_hash: {signature_hash},
+        }},
+        environment: None,
+        failure_payload: vec![],
+    }};
+
+    let result = replay_seed_bundle(&bundle);
+    assert_eq!(result.actual.category, {category:?});
+    assert_eq!(result.actual.digest, {digest});
+    assert_eq!(result.actual.signature_hash, {signature_hash});
+    assert!(result.matches, "replay should match exported failing bundle signature");
+}}
+"#,
+        test_name = test_name,
+        seed_id = bundle.seed.id,
+        payload_literal = payload_literal,
+        category = bundle.signature.category,
+        digest = bundle.signature.digest,
+        signature_hash = bundle.signature.signature_hash
+    ))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -172,6 +244,33 @@ mod tests {
         let scenario = FailureScenario::from_bundle(&bundle, "invoker");
         
         assert_eq!(scenario.failure_class, bundle.signature.category);
+    }
+
+    #[test]
+    fn rust_fixture_export_contains_regression_test_shape() {
+        let bundle = to_bundle(CaseSeed {
+            id: 42,
+            payload: vec![0x0A, 0x0B, 0x0C],
+        });
+
+        let fixture = export_rust_regression_fixture(&bundle, "seed_42_runtime").unwrap();
+
+        assert!(fixture.contains("fn seed_42_runtime()"));
+        assert!(fixture.contains("CaseSeed"));
+        assert!(fixture.contains("replay_seed_bundle"));
+        assert!(fixture.contains("assert_eq!(result.actual.category"));
+        assert!(fixture.contains("runtime-failure"));
+    }
+
+    #[test]
+    fn rust_fixture_export_rejects_invalid_test_name() {
+        let bundle = to_bundle(CaseSeed {
+            id: 8,
+            payload: vec![1, 2, 3],
+        });
+
+        let err = export_rust_regression_fixture(&bundle, "seed 8 bad name").unwrap_err();
+        assert!(err.contains("test name"));
     }
 }
 

@@ -56,7 +56,7 @@ pub use corpus::{
 };
 
 pub mod scenario_export;
-pub use scenario_export::{FailureScenario, export_scenario_json};
+pub use scenario_export::{FailureScenario, export_rust_regression_fixture, export_scenario_json};
 
 pub mod simulation;
 pub use simulation::{
