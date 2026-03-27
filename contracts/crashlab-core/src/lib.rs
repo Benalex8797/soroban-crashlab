@@ -87,6 +87,11 @@ pub use run_control::{
 pub mod rpc_envelope;
 pub use rpc_envelope::{RpcEnvelopeCapture, RpcRequestEnvelope, RpcResponseEnvelope};
 
+pub mod stellar_address;
+pub use stellar_address::{
+    AddressMutatorConfig, AddressType, StellarAddressMutator, generate_address_vectors,
+};
+
 /// Wrapper for the legacy bit-flipper mutation logic.
 pub struct DefaultMutator;
 
