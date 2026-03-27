@@ -13,6 +13,7 @@ import { generateMarkdownReport } from './report-utils';
 import CreateRunHeatmapPage55 from './create-run-heatmap-page-55';
 import { FuzzingRun, RunStatus } from './types';
 import CrossRunBoardWidgets from './implement-cross-run-board-widgets-component';
+import CrossRunBoardCustomWidgets from './create-cross-run-board-custom-widgets-63';
 import RunClusterVisualization from './add-run-cluster-visualization';
 import RunClusterOverview from './add-run-cluster-overview';
 
@@ -335,6 +336,7 @@ function HomeContent() {
       {/* Cross-run board widgets section */}
       <div className="w-full mb-12">
         <CrossRunBoardWidgets />
+        <CrossRunBoardCustomWidgets runs={runs} />
       </div>
 
       {/* Run cluster visualization section */}
