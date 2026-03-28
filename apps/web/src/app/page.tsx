@@ -26,6 +26,7 @@ import CreateReportingTemplatesPage60 from './create-reporting-templates-page-60
 import TimelineScrubber from './implement-timeline-scrubber-component-component';
 import ColumnCustomization, { ColumnId } from './add-column-customization';
 import IssueTriageBoard from './add-issue-triage-board-ui';
+import CampaignMilestoneTimeline from './campaign-milestone-timeline-55';
 
 // Mock data for demonstration
 const MOCK_RUNS: FuzzingRun[] = Array.from({ length: 25 }, (_, i) => ({
@@ -569,6 +570,9 @@ function HomeContent() {
         {isMaintainer && (
           <FailureClusterView runs={runs} pathname={pathname} queryString={stableQueryString} />
         )}
+        <div className="mb-8 w-full">
+          <CampaignMilestoneTimeline campaignId="campaign-001" autoUpdateInterval={5000} maxEventsDisplayed={10} />
+        </div>
         <RunHistoryTable 
           runs={paginatedRuns} 
           onSelectRun={handleOpenRunDrawer} 

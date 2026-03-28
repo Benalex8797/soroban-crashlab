@@ -79,7 +79,7 @@ where
         match f() {
             Ok(val) => return Ok(val),
             Err(e) if e.is_transient() && attempt < config.max_attempts => {
-                let backoff = calculate_backoff(config, attempt, prng.as_deref_mut());
+                let _backoff = calculate_backoff(config, attempt, prng.as_deref_mut());
 
                 #[cfg(not(test))]
                 std::thread::sleep(backoff);
@@ -115,7 +115,7 @@ pub fn calculate_backoff(
     // Apply jitter (0.5 to 1.5 of the capped backoff)
     let jitter_factor = if let Some(p) = prng {
         // Use deterministic PRNG for stable tests
-        0.5 + p.next_f64()
+        0.5 + ((p.next_u64() as f64) / (u64::MAX as f64))
     } else {
         // Fallback to simple pseudo-randomness if no PRNG provided
         #[cfg(not(test))]
@@ -126,7 +126,7 @@ pub fn calculate_backoff(
                 .unwrap_or(Duration::ZERO)
                 .as_nanos() as u64;
             let mut p = SeededPrng::new(seed);
-            0.5 + p.next_f64()
+            0.5 + ((p.next_u64() as f64) / (u64::MAX as f64))
         }
         #[cfg(test)]
         1.0
@@ -223,7 +223,7 @@ mod tests {
         };
 
         let mut calls = 0;
-        let result = execute_with_retry(&config, None, || {
+        let result: Result<(), SimulationError> = execute_with_retry(&config, None, || {
             calls += 1;
             Err(SimulationError::Transient("fail".to_string()))
         });
