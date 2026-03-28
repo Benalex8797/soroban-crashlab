@@ -79,10 +79,11 @@ where
         match f() {
             Ok(val) => return Ok(val),
             Err(e) if e.is_transient() && attempt < config.max_attempts => {
-                let _backoff = calculate_backoff(config, attempt, prng.as_deref_mut());
-
+                let backoff = calculate_backoff(config, attempt, prng.as_deref_mut());
                 #[cfg(not(test))]
-                std::thread::sleep(_backoff);
+                std::thread::sleep(backoff);
+                #[cfg(test)]
+                std::hint::black_box(backoff);
 
                 // In tests, we might want to avoid actual sleep to keep them fast.
                 // However, the prompt implies "bounded retry strategy... in the soroban-crashlab runtime".
