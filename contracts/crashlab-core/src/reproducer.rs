@@ -137,13 +137,14 @@ pub fn shrink_seed_preserving_signature<F>(
     seed: &CaseSeed,
     expected: &CrashSignature,
     reproducer: F,
-) -> CaseSeed
+) -> Result<CaseSeed, SimulationError>
 where
-    F: Fn(&CaseSeed) -> CrashSignature,
+    F: FnMut(&CaseSeed) -> Result<CrashSignature, SimulationError>,
 {
+    let config = RetryConfig::default();
     let mut best = seed.clone();
     if best.payload.is_empty() {
-        return best;
+        return Ok(best);
     }
 
     let mut chunk = (best.payload.len() / 2).max(1);
@@ -160,7 +161,8 @@ where
             let mut candidate = best.clone();
             candidate.payload.drain(start..end);
 
-            if reproducer(&candidate) == *expected {
+            let sig = execute_with_retry(&config, None, || reproducer(&candidate))?;
+            if sig == *expected {
                 best = candidate;
                 improved = true;
                 // Retry at same index because the payload shifted left.
@@ -187,18 +189,23 @@ where
         }
     }
 
-    best
+    Ok(best)
 }
 
 /// Shrinks only the seed payload inside a failing bundle while preserving the
 /// bundle's reference signature.
-pub fn shrink_bundle_payload<F>(bundle: &CaseBundle, reproducer: F) -> CaseBundle
+///
+/// # Errors
+///
+/// Returns [`SimulationError`] if a run fails after all retry attempts or
+/// if a non-transient error is encountered.
+pub fn shrink_bundle_payload<F>(bundle: &CaseBundle, reproducer: F) -> Result<CaseBundle, SimulationError>
 where
-    F: Fn(&CaseSeed) -> CrashSignature,
+    F: FnMut(&CaseSeed) -> Result<CrashSignature, SimulationError>,
 {
     let mut shrunk = bundle.clone();
-    shrunk.seed = shrink_seed_preserving_signature(&bundle.seed, &bundle.signature, reproducer);
-    shrunk
+    shrunk.seed = shrink_seed_preserving_signature(&bundle.seed, &bundle.signature, reproducer)?;
+    Ok(shrunk)
 }
 
 #[cfg(test)]
@@ -415,20 +422,20 @@ mod tests {
 
     // ── shrinking ─────────────────────────────────────────────────────────────
 
-    fn anchor_signature(seed: &CaseSeed) -> CrashSignature {
+    fn anchor_signature(seed: &CaseSeed) -> Result<CrashSignature, SimulationError> {
         let has_anchor = seed.payload.windows(2).any(|w| w == [0xAA, 0xBB]);
         if has_anchor {
-            CrashSignature {
+            Ok(CrashSignature {
                 category: "runtime-failure".to_string(),
                 digest: 0x1234,
                 signature_hash: 0x7777,
-            }
+            })
         } else {
-            CrashSignature {
+            Ok(CrashSignature {
                 category: "runtime-failure".to_string(),
                 digest: 0x9999,
                 signature_hash: 0xEEEE,
-            }
+            })
         }
     }
 
@@ -438,12 +445,12 @@ mod tests {
             id: 77,
             payload: vec![0, 1, 2, 0xAA, 0xBB, 3, 4, 5, 6],
         };
-        let expected = anchor_signature(&seed);
+        let expected = anchor_signature(&seed).unwrap();
 
-        let shrunk = shrink_seed_preserving_signature(&seed, &expected, anchor_signature);
+        let shrunk = shrink_seed_preserving_signature(&seed, &expected, anchor_signature).unwrap();
 
         assert!(shrunk.payload.len() < seed.payload.len());
-        assert_eq!(anchor_signature(&shrunk), expected);
+        assert_eq!(anchor_signature(&shrunk).unwrap(), expected);
     }
 
     #[test]
@@ -452,12 +459,12 @@ mod tests {
             id: 88,
             payload: vec![0xAA, 0xBB],
         };
-        let expected = anchor_signature(&seed);
+        let expected = anchor_signature(&seed).unwrap();
 
-        let shrunk = shrink_seed_preserving_signature(&seed, &expected, anchor_signature);
+        let shrunk = shrink_seed_preserving_signature(&seed, &expected, anchor_signature).unwrap();
 
         assert_eq!(shrunk.payload, seed.payload);
-        assert_eq!(anchor_signature(&shrunk), expected);
+        assert_eq!(anchor_signature(&shrunk).unwrap(), expected);
     }
 
     #[test]
@@ -468,15 +475,15 @@ mod tests {
         };
         let bundle = CaseBundle {
             seed: seed.clone(),
-            signature: anchor_signature(&seed),
+            signature: anchor_signature(&seed).unwrap(),
             environment: None,
             failure_payload: vec![],
             rpc_envelope: None,
         };
 
-        let shrunk = shrink_bundle_payload(&bundle, anchor_signature);
+        let shrunk = shrink_bundle_payload(&bundle, anchor_signature).unwrap();
 
         assert!(shrunk.seed.payload.len() <= bundle.seed.payload.len());
-        assert_eq!(anchor_signature(&shrunk.seed), bundle.signature);
+        assert_eq!(anchor_signature(&shrunk.seed).unwrap(), bundle.signature);
     }
 }
