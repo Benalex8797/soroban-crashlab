@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import RunHistoryTable from './RunHistoryTable';
+import RunHistoryTable from './implement-run-history-table-component';
 import RunHistoryTableSkeleton from './RunHistoryTableSkeleton';
 import Pagination from './Pagination';
 import CrashDetailDrawer from './CrashDetailDrawer';
@@ -593,7 +593,7 @@ function HomeContent() {
           runs={paginatedRuns} 
           onSelectRun={handleOpenRunDrawer} 
           onViewReport={setReportRun} 
-          visibleColumns={visibleColumns}
+          visibleColumns={[...visibleColumns, 'severity', 'actions']}
         />
         {dataState === 'loading' && (
           <RunHistoryTableSkeleton rows={ITEMS_PER_PAGE} />
