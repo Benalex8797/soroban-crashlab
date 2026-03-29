@@ -38,6 +38,7 @@ import AddExportRunJson from './add-export-run-json';
 import AddExportRunCsv from './add-export-run-csv';
 import IntegrateWebhookManagerForRunEvents from './integrate-webhook-manager-for-run-events';
 import ArtifactExplorer from './add-artifact-explorer';
+import RunSeverityFilter from './add-run-filtering-by-severity';
 
 // Mock data for demonstration
 const MOCK_RUNS: FuzzingRun[] = Array.from({ length: 25 }, (_, i) => ({
@@ -112,6 +113,9 @@ function HomeContent() {
   const statusFilter = STATUS_OPTIONS.includes((searchParams.get('status') ?? 'all') as 'all' | RunStatus)
     ? ((searchParams.get('status') ?? 'all') as 'all' | RunStatus)
     : 'all';
+  const severityFilter = (['all', 'low', 'medium', 'high', 'critical'].includes(searchParams.get('severity') ?? 'all'))
+    ? (searchParams.get('severity') ?? 'all') as 'all' | RunSeverity
+    : 'all';
   const expensiveOnly = searchParams.get('expensive') === '1';
   const pageParam = Number.parseInt(searchParams.get('page') ?? '1', 10);
   const currentPage = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
@@ -142,6 +146,9 @@ function HomeContent() {
   const filteredRuns = useMemo(() => {
     return runs.filter((run) => {
       if (statusFilter !== 'all' && run.status !== statusFilter) {
+        return false;
+      }
+      if (severityFilter !== 'all' && run.severity !== severityFilter) {
         return false;
       }
       if (expensiveOnly && !isExpensiveRun(run)) {
@@ -534,7 +541,11 @@ function HomeContent() {
               <option value="cancelled">Cancelled</option>
             </select>
           </label>
-          <label className="inline-flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+          <RunSeverityFilter 
+            value={severityFilter} 
+            onChange={(val) => setQueryState({ severity: val === 'all' ? null : val, page: null })} 
+          />
+          <label className="inline-flex items-center gap-3 text-sm text-zinc-700 dark:text-zinc-300 group cursor-pointer">
             <input
               type="checkbox"
               checked={expensiveOnly}
