@@ -32,6 +32,7 @@ import VirtualizedRunTable from './implement-virtualized-run-table-component';
 import ReportingTemplatesManager from './add-reporting-templates-manager';
 import AutomatedRegressionDeployIntegration from './integrate-automated-regression-deploy-integration';
 import ReportGenerator from './add-report-generator';
+import WidgetLayoutEditor from './implement-widget-layout-editor-component';
 
 // Mock data for demonstration
 const MOCK_RUNS: FuzzingRun[] = Array.from({ length: 25 }, (_, i) => ({
@@ -697,6 +698,12 @@ function HomeContent() {
       {isMaintainer && (
         <div className="mb-12 w-full">
           <AlertingSettingsPage54 />
+        </div>
+      )}
+
+      {isMaintainer && (
+        <div className="mb-12 w-full">
+          <WidgetLayoutEditor />
         </div>
       )}
 
