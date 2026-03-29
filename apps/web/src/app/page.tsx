@@ -17,6 +17,7 @@ import CrossRunBoardWidgets from './implement-cross-run-board-widgets-component'
 import CrossRunBoardCustomWidgets from './create-cross-run-board-custom-widgets-63';
 import RunClusterVisualization from './add-run-cluster-visualization';
 import RunClusterOverview from './add-run-cluster-overview';
+import ImplementRunWorkflowBoardPage58 from './implement-run-workflow-board-page-58';
 
 // Mock data for demonstration
 const MOCK_RUNS: FuzzingRun[] = Array.from({ length: 25 }, (_, i) => ({
@@ -305,6 +306,11 @@ function HomeContent() {
       <div className="w-full mb-12">
         <CrossRunBoardWidgets />
         <CrossRunBoardCustomWidgets runs={runs} />
+      </div>
+
+      {/* Run workflow board section */}
+      <div className="w-full mb-12">
+        <ImplementRunWorkflowBoardPage58 runs={runs} />
       </div>
 
       <div className="text-center max-w-3xl mb-16">
