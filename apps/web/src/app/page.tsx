@@ -37,6 +37,7 @@ import AddRunStatusTimeline from './add-run-status-timeline';
 import AddExportRunJson from './add-export-run-json';
 import AddExportRunCsv from './add-export-run-csv';
 import IntegrateWebhookManagerForRunEvents from './integrate-webhook-manager-for-run-events';
+import LogViewer from './implement-log-viewer-component';
 import AddAccessibleKeyboardNavBlueprint from './add-accessible-keyboard-nav-blueprint';
 import ArtifactExplorer from './add-artifact-explorer';
 import RunSeverityFilter from './add-run-filtering-by-severity';
@@ -553,6 +554,9 @@ function HomeContent() {
           <AddRunTimeline runs={runs} onSelectRun={handleOpenRunDrawer} />
           <div className="mt-12 w-full">
             <AddRunStatusTimeline runs={runs} />
+          </div>
+          <div className="mt-12 w-full">
+            <LogViewer />
           </div>
         </>
       )}
