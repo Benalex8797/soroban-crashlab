@@ -44,7 +44,10 @@ cd apps/web && npx jest src/app/add-heatmap-interactions.test.ts
 
 - **46 tests pass** (0 failures, 0 snapshots)
 
-## Checklist
+```bash
+cd contracts/crashlab-core
+cargo test --all-targets
+```
 
 - [x] Frontend checks pass (`npm run lint`)
 - [x] Build failure is pre-existing, not introduced by this PR

@@ -6,12 +6,12 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import RunHistoryTable from './implement-run-history-table-component';
 import RunHistoryTableSkeleton from './RunHistoryTableSkeleton';
 import Pagination from './Pagination';
-import CrashDetailDrawer from './CrashDetailDrawer';
+import RunDetailModal from './implement-run-detail-modal-component';
 import { FuzzingRun, RunStatus, RunArea, RunSeverity } from './types';
 import ReportModal from './ReportModal';
 import { generateMarkdownReport } from './report-utils';
-import CreateRunHeatmapPage55 from './create-run-heatmap-page-55';
 import AddRunComparisonCharts from './add-run-comparison-charts';
+import AddRunComparison from './add-run-comparison';
 import AddTaggingAndLabelsUi from './add-tagging-and-labels-ui';
 import AlertingSettingsPage54 from './implement-alerting-settings-page-54';
 import AlertingSettingsPage from './create-alerting-settings-page-page';
@@ -689,6 +689,9 @@ function HomeContent() {
       </div>
 
       <div className="mb-12 w-full">
+        <AddRunComparison runs={filteredRuns} />
+      </div>
+      <div className="mb-12 w-full">
         <RunClusterVisualization 
           runs={filteredRuns} 
           onRunSelect={handleOpenRunDrawer}
@@ -823,8 +826,8 @@ function HomeContent() {
       />
 
       {selectedRun && (
-        <CrashDetailDrawer
-          key={selectedRun.id}
+        <RunDetailModal
+          isOpen={true}
           run={selectedRun}
           onClose={handleCloseRunDrawer}
           onReplayComplete={handleReplayComplete}
